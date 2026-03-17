@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MDR · interchange calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #e9ebee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 400px;
+      height: 700px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f0f2f5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .header {
+      background: #4267b2;
+      color: white;
+      padding: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .header .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: 2px;
+      color: white;
+      font-size: 1.6rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: 0.1s;
+    }
+    .header .back-btn:active {
+      background: rgba(255,255,255,0.4);
+      transform: scale(0.95);
+    }
+    .header h2 {
+      font-size: 1.3rem;
+      font-weight: 500;
+      flex: 1;
+      text-align: center;
+    }
+
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      border: 1px solid #dddfe2;
+    }
+
+    .input-field {
+      margin-bottom: 20px;
+    }
+    .input-field label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4b4f56;
+      margin-bottom: 4px;
+    }
+    .input-field input, .input-field select {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      background: #f5f6f7;
+      border: 1px solid #ccd0d5;
+      border-radius: 6px;
+    }
+    .input-field input:focus, .input-field select:focus {
+      border-color: #4267b2;
+      outline: none;
+      background: white;
+    }
+
+    /* quick amount buttons */
+    .quick-amounts {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .quick-btn {
+      flex: 1;
+      background: #e7ecf5;
+      border: 1px solid #ccd0d5;
+      border-radius: 6px;
+      padding: 10px 0;
+      font-weight: 500;
+      color: #1c1e21;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.1s;
+    }
+    .quick-btn:active {
+      background: #d1d9e8;
+    }
+
+    .calculate-btn {
+      background: #4267b2;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 6px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .calculate-btn:active {
+      background: #365899;
+    }
+
+    .rate-grid {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #dddfe2;
+      font-size: 0.85rem;
+    }
+    .rate-grid .title {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .rate-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .group-pill {
+      background: #f2f3f5;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .result-section {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #dddfe2;
+    }
+
+    .flow-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .flow-box {
+      background: #f5f6f7;
+      flex: 1;
+      border-radius: 6px;
+      padding: 6px;
+      border: 1px solid #dadde1;
+    }
+    .flow-box .label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #4b4f56;
+      text-transform: uppercase;
+    }
+    .flow-box .value {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: blue;
+      line-height: 1.6;
+    }
+    .flow-box .sub {
+      font-size: 0.9rem;
+      color: #606770;
+    }
+
+    .mdr-box {
+      background: #e7f0ff;
+      border-left: 5px solid #4267b2;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .mdr-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 500;
+    }
+    .mdr-main .amount {
+      font-size: 2rem;
+      font-weight: 500;
+    }
+    .interchange-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 12px;
+      background: #ffffffb0;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .interchange-item {
+      display: flex;
+      justify-content: space-between;
+    }
+    .interchange-item .label {
+      font-weight: 500;
+      color: #1d3c6b;
+    }
+    .interchange-item .value {
+      font-weight: 500;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #dadde1;
+      margin-bottom: 20px;
+    }
+    .comparison-table th {
+      background: #f2f3f5;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 12px 4px;
+      text-align: center;
+      border-bottom: 1px solid #ccd0d5;
+    }
+    .comparison-table td {
+      padding: 12px 4px;
+      text-align: center;
+      border-bottom: 1px solid #e9ebee;
+      font-size: 0.9rem;
+    }
+    .comparison-table .row-label {
+      font-weight: 500;
+      background: #fafbfc;
+      text-align: left;
+      padding-left: 16px;
+      border-right: 1px solid #dadde1;
+    }
+    .plus {
+      color: #1e7a44;
+      font-weight: 550;
+    }
+    .minus {
+      color: #c74b4b;
+      font-weight: 550;
+    }
+    .income-row td {
+      background: #f0f7f0;
+      font-weight: 600;
+    }
+
+    .back-bottom {
+      background: white;
+      border: 1px solid #dadde1;
+      border-radius: 6px;
+      padding: 14px;
+      font-weight: 500;
+      color: #4267b2;
+      width: 100%;
+      text-align: center;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .back-bottom:active {
+      background: #f2f3f5;
+    }
+
+    .footnote {
+      font-size: 0.7rem;
+      color: #606770;
+      text-align: center;
+      margin-top: 5px;
+    }
+    .small-note {
+      font-size: 0.75rem;
+      color: #606770;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- INPUT SCREEN -->
+  <div id="inputScreen" class="screen">
+    <div class="header">
+      <div style="width:40px;"></div>
+      <h2>MDR calculator</h2>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="scroll-area">
+      <div class="card">
+        <div class="input-field">
+          <label>Amount (MMK)</label>
+          <input type="text" id="amountInput" value="100,000" placeholder="0">
+          <!-- quick amount buttons -->
+          <div class="quick-amounts">
+            <div class="quick-btn" data-amount="1000">1,000</div>
+            <div class="quick-btn" data-amount="50000">50,000</div>
+            <div class="quick-btn" data-amount="100000">100,000</div>
+          </div>
+        </div>
+        <div class="input-field">
+          <label>MCC Group</label>
+          <select id="groupSelect">
+            <option value="1">Group 1 (Gov)</option>
+            <option value="2">Group 2 (Tourism)</option>
+            <option value="3">Group 3 (Donations)</option>
+            <option value="4">Group 4 (SME)</option>
+            <option value="5">Group 5 (Edu&Health)</option>
+            <option value="6">Group 6 (Petrol)</option>
+            <option value="7" selected>Group 7 (F&B)</option>
+          </select>
+        </div>
+        <button class="calculate-btn" id="calculateBtn">Calculate</button>
+      </div>
+
+      <!-- rate reference -->
+      <div class="rate-grid">
+        <div class="title">MDR / Interchange rates</div>
+        <div class="rate-row">
+          <span class="group-pill">G1: ≤100k → 300</span>
+          <span class="group-pill">G1: >100k → 0.40%</span>
+        </div>
+        <div class="rate-row">
+          <span class="group-pill">G2: 0.60%</span>
+          <span class="group-pill">G3: 0%</span>
+          <span class="group-pill">G4: 0.30%</span>
+          <span class="group-pill">G5: 0.30%</span>
+          <span class="group-pill">G6: 0.50%</span>
+          <span class="group-pill">G7: 0.50%</span>
+        </div>
+        <div class="small-note">Interchange: OI / RI split per table – volume & network fees apply.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="resultScreen" class="screen hidden">
+    <div class="header">
+      <button class="back-btn" id="backBtn">← </button>
+      <h2>Settlement</h2>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="scroll-area" id="resultScroll"></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const inputScreen = document.getElementById('inputScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const backBtn = document.getElementById('backBtn');
+    const amountInput = document.getElementById('amountInput');
+    const groupSelect = document.getElementById('groupSelect');
+    const resultScroll = document.getElementById('resultScroll');
+    const quickBtns = document.querySelectorAll('.quick-btn');
+
+    // --- helper: parse amount with comma stripping
+    function parseAmount(str) {
+      if (!str) return 0;
+      const cleaned = str.replace(/,/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : Math.round(num); // enforce integer
+    }
+
+    // --- format number with commas (no decimals)
+    function formatWithCommas(value) {
+      let num = Number(value);
+      if (isNaN(num)) return '0';
+      let rounded = Math.round(num);
+      return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // format MMK with commas (for display)
+    function formatMMK(value) {
+      return formatWithCommas(value) + ' MMK';
+    }
+
+    // signed value without currency (for table)
+    function signedValue(value) {
+      let num = Number(value);
+      if (isNaN(num)) num = 0;
+      return (num >= 0 ? '+' : '-') + formatWithCommas(Math.abs(num));
+    }
+
+    // minus for fees (always show minus)
+    function minusValue(value) {
+      let num = Number(value);
+      if (isNaN(num)) num = 0;
+      return '-' + formatWithCommas(Math.abs(num));
+    }
+
+    // --- core calculation using new table, returning also rates
+    function compute(amount, group) {
+      // amount is integer
+      let mdr, oiDist, riDist, rateDesc, oiRate, riRate;
+      const groupMap = {
+        '1': { // Gov
+          threshold: 100000,
+          lowMdr: 300, lowOi: 162, lowRi: 138,
+          highMdr: 0.004, highOi: 0.0018, highRi: 0.0022
+        },
+        '2': { mdr: 0.006, oi: 0.0032, ri: 0.0028, desc: '0.60%' },
+        '3': { mdr: 0, oi: 0, ri: 0, desc: '0%' },
+        '4': { mdr: 0.003, oi: 0.0016, ri: 0.0014, desc: '0.30%' },
+        '5': { mdr: 0.003, oi: 0.0016, ri: 0.0014, desc: '0.30%' },
+        '6': { mdr: 0.005, oi: 0.0027, ri: 0.0023, desc: '0.50%' },
+        '7': { mdr: 0.005, oi: 0.0027, ri: 0.0023, desc: '0.50%' }
+      };
+
+      if (group === '1') {
+        if (amount <= 100000) {
+          mdr = 300;
+          oiDist = 162;
+          riDist = 138;
+          rateDesc = 'fixed 300';
+          oiRate = 'fixed';
+          riRate = 'fixed';
+        } else {
+          mdr = amount * 0.004;
+          oiDist = amount * 0.0018;
+          riDist = amount * 0.0022;
+          rateDesc = '0.40%';
+          oiRate = '0.18%';
+          riRate = '0.22%';
+        }
+      } else {
+        const g = groupMap[group];
+        mdr = amount * g.mdr;
+        oiDist = amount * g.oi;
+        riDist = amount * g.ri;
+        rateDesc = g.desc;
+        oiRate = (g.oi * 100).toFixed(2) + '%';
+        riRate = (g.ri * 100).toFixed(2) + '%';
+      }
+
+      // round to 2 decimals (though amounts are integers)
+      mdr = Math.round(mdr * 100) / 100;
+      oiDist = Math.round(oiDist * 100) / 100;
+      riDist = Math.round(riDist * 100) / 100;
+
+      // from customer / to merchant (same logic: group1 uses MDR, others just amount)
+      let fromCustomer = (group === '1') ? amount + mdr : amount;
+      let toMerchant = (group === '1') ? amount : amount - mdr;
+      fromCustomer = Math.round(fromCustomer * 100) / 100;
+      toMerchant = Math.round(toMerchant * 100) / 100;
+
+      // volume & network fees
+      const oiVolume = amount * 0.0008;      // 0.08%
+      const oiNetwork = amount < 3000 ? 1 : 3;
+      const riVolume = amount * 0.0005;      // 0.05%
+      const riNetwork = 0;
+
+      const oiIncome = oiDist - oiVolume - oiNetwork;
+      const riIncome = riDist - riVolume - riNetwork;
+
+      function r(v) { return Math.round(v * 100) / 100; }
+
+      return {
+        amount,
+        group,
+        mdr,
+        oiDist: r(oiDist),
+        riDist: r(riDist),
+        oiRate,
+        riRate,
+        rateDesc,
+        fromCustomer,
+        toMerchant,
+        oiVolume: r(oiVolume),
+        oiNetwork: r(oiNetwork),
+        oiIncome: r(oiIncome),
+        riVolume: r(riVolume),
+        riNetwork: r(riNetwork),
+        riIncome: r(riIncome)
+      };
+    }
+
+    // render result page
+    function renderResult(r) {
+      // Build interchange strings
+      const oiRateDisplay = r.oiRate === 'fixed' ? 'fixed' : r.oiRate;
+      const riRateDisplay = r.riRate === 'fixed' ? 'fixed' : r.riRate;
+
+      const html = `
+        <div class="result-section">
+          <div class="flow-row">
+            <div class="flow-box">
+              <div class="label">From customer</div>
+              <div class="value">${formatMMK(r.fromCustomer)}</div>
+              <div class="sub">${r.group === '1' ? 'Amount+MDR' : 'Amount'}</div>
+            </div>
+            <div class="flow-box">
+              <div class="label">To merchant</div>
+              <div class="value">${formatMMK(r.toMerchant)}</div>
+              <div class="sub">${r.group === '1' ? 'Amount' : 'Amount−MDR'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mdr-box">
+          <div class="mdr-main">
+            <span>MDR · ${r.rateDesc}</span>
+            <span class="amount">${formatMMK(r.mdr)}</span>
+          </div>
+          <div class="interchange-row">
+            <div class="interchange-item">
+              <span class="label">
+             Interchange :</span>
+              <span class="value">${oiRateDisplay} (${formatMMK(r.oiDist)})</span>
+            </div>
+            <div class="interchange-item">
+              <span class="label">Remain  :</span>
+              <span class="value">${riRateDisplay} (${formatMMK(r.riDist)})</span>
+            </div>
+          </div>
+        </div>
+
+        <table class="comparison-table">
+          <thead>
+            <tr><th></th><th>OI (Wallet)</th><th>RI (Merchant)</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-label">Distribution</td>
+              <td class="plus">${signedValue(r.oiDist)}</td>
+              <td class="plus">${signedValue(r.riDist)}</td>
+            </tr>
+            <tr>
+              <td class="row-label">Volume fee</td>
+              <td class="minus">${minusValue(r.oiVolume)}</td>
+              <td class="minus">${minusValue(r.riVolume)}</td>
+            </tr>
+            <tr>
+              <td class="row-label">Network fee</td>
+              <td class="minus">${minusValue(r.oiNetwork)}</td>
+              <td class="minus">${minusValue(r.riNetwork)}</td>
+            </tr>
+            <tr class="income-row">
+              <td class="row-label">Income</td>
+              <td class="plus">${signedValue(r.oiIncome)}</td>
+              <td class="plus">${signedValue(r.riIncome)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 12px;">
+          <span class="group-pill">Group ${r.group}</span>
+          <span class="group-pill">Amount: ${formatWithCommas(r.amount)} MMK</span>
+        </div>
+
+        <div class="back-bottom" id="backFromResult">← Back to input</div>
+        <div class="footnote">Interchange settled to OI (charge from RI) · All values in MMK</div>
+      `;
+      resultScroll.innerHTML = html;
+      document.getElementById('backFromResult').addEventListener('click', () => {
+        inputScreen.classList.remove('hidden');
+        resultScreen.classList.add('hidden');
+      });
+    }
+
+    // format amount input with commas on blur
+    function formatInput() {
+      let val = amountInput.value.replace(/,/g, '');
+      let num = parseInt(val, 10);
+      if (isNaN(num) || num < 0) num = 0;
+      amountInput.value = formatWithCommas(num);
+    }
+
+    amountInput.addEventListener('blur', formatInput);
+    amountInput.addEventListener('input', function(e) {
+      let val = this.value.replace(/[^\d,]/g, '');
+      this.value = val;
+    });
+
+    // quick amount buttons
+    quickBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        let amt = parseInt(btn.dataset.amount, 10);
+        amountInput.value = formatWithCommas(amt);
+      });
+    });
+
+    // calculate
+    calculateBtn.addEventListener('click', () => {
+      let amount = parseAmount(amountInput.value);
+      amount = Math.round(amount); // ensure integer
+      const group = groupSelect.value;
+
+      const results = compute(amount, group);
+      renderResult(results);
+
+      inputScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+    });
+
+    backBtn.addEventListener('click', () => {
+      inputScreen.classList.remove('hidden');
+      resultScreen.classList.add('hidden');
+    });
+
+    // initial formatting
+    formatInput();
+  })();
+</script>
+</body>
+</html>
